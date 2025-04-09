@@ -186,7 +186,7 @@ pprint(Cqdot)
 # Compute full torque vector tau
 tau = D * qddot + Cqdot + g_vec
 
-# Optionally substitute in numerical mass values and g from assignment
+# substitute in numerical mass values and g from assignment
 mass_values = {m1: 0.3833, m2: 0.2724, m3: 0.1196, g : 9.81}
 tau = tau.subs(mass_values)
 tau_rounded = tau.evalf(4)
