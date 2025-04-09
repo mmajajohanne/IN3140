@@ -4,6 +4,12 @@ from sympy.physics.vector import dynamicsymbols
 
 # Define symbols
 q1, q2, q3 = dynamicsymbols('q1 q2 q3')
+t = dynamicsymbols._t
+
+# Generalized velocity and acceleration vectors
+qdot = Matrix([q1.diff(), q2.diff(), q3.diff()])
+qddot = Matrix([q1.diff(t, 2), q2.diff(t, 2), q3.diff(t, 2)])
+
 L1, L2, L3 = symbols('L1 L2 L3')  # link lengths
 g = symbols('g')                 # gravity
 m1, m2, m3 = symbols('m1 m2 m3') # masses
@@ -11,15 +17,15 @@ m1, m2, m3 = symbols('m1 m2 m3') # masses
 
 # ------------------------------------
 #a) Compute the potential energy for the manipulator P
+# ------------------------------------
 
 # Gravity vector (in base frame)
 g_vec = Matrix([0, 0, -g])
 
-
 # CoM of Link 1 (vertical link)
 rc1 = Matrix([0, 0, L1/2])
 
-# CoM of Link 2 (from forward kinematics task 2 assignment 2)
+# CoM of Link 2 (from forward kinematics assignment 1)
 rc2 = Matrix([
     L2/2 * cos(q1) * cos(q2),
     L2/2 * sin(q1) * cos(q2),
@@ -38,12 +44,13 @@ rc3 = Matrix([
 P = m1 * g_vec.dot(rc1) + m2 * g_vec.dot(rc2) + m3 * g_vec.dot(rc3)
 P = P.simplify()
 
-#print("Potential energy P:")
-#print(P)
+print("--------Potential energy:------")
+pprint(P)
 
 
 # ------------------------------------
 #b) Compute the kinetic energy K
+# ------------------------------------
 
 # Jacobian matrix for the 3-DOF CrustCrawler
 c1 = cos(q1)
@@ -84,9 +91,7 @@ Jw3 = Jw[:, 0:3]
 # Compute inertia matrix D(q)
 
 # Inertia tensors: the assignment assumes rectangular solid links. The standard formula for a box:
-# I = (1/12) * m * diag(b^2 + h^2, a^2 + h^2, a^2 + b^2)
-# where a, b, h = width, depth, height of the link.
-# This corresponds to the I_i,x, I_i,y, I_i,z values mentioned in the assignment.
+# I = (1/12) * m * diag(b^2 + h^2, a^2 + h^2, a^2 + b^2) where a, b, h = width, depth, height of the link.
 a1, b1, h1 = symbols('a1 b1 h1')
 a2, b2, h2 = symbols('a2 b2 h2')
 a3, b3, h3 = symbols('a3 b3 h3')
@@ -110,9 +115,7 @@ I3 = Matrix.diag(
     (1/12)*m3*(a3**2 + b3**2)
 )
 
-# Assume inertia tensors are already expressed in the base frame (i.e. link frames are aligned with base).
-# Since the assignment shows diagonal inertia tensors and doesn't mention any rotation, we simplify by using identity matrices.
-# That means R_i * I_i * R_i.T = I_i.
+# Assume that R_i * I_i * R_i.T = I_i.
 R1 = R2 = R3 = Matrix.eye(3)
 
 # Pad D1 (1x1) to 3x3
@@ -135,27 +138,22 @@ D = D1 + D2 + D3
 
 # Final kinetic energy expression
 
-# Generalized velocity vector
-qdot = Matrix([q1.diff(), q2.diff(), q3.diff()])
-
 # Kinetic energy
 K = (1/2) * qdot.T * D * qdot
 K.simplify()
 K_rounded = K.evalf(4)  # Round all floats to 4 decimals
+print("-------- Kinetic energy:--------")
 pprint(K_rounded)
 
 
 # ------------------------------------
 # d) Compute gravity vector g(q) and Coriolis term C(q, qdot)*qdot
 
-# Gravity vector from potential energy
+# Gravity vector from the gradient of potential energy 
 g1 = diff(P, q1)
 g2 = diff(P, q2)
 g3 = diff(P, q3)
 g_vec = Matrix([g1, g2, g3])
-
-# Generalized velocities
-qdot = Matrix([q1.diff(), q2.diff(), q3.diff()])
 
 # Initialize Christoffel symbols and C(q, qdot) matrix
 C = Matrix.zeros(3, 3)
@@ -173,3 +171,25 @@ for i in range(3):
 
 # Coriolis and centrifugal forces: C(q, qdot) * qdot
 Cqdot = C * qdot
+Cqdot = Cqdot.evalf(4)
+
+print("--------Gravity vector:--------")
+pprint(g_vec)
+print("--------Coriolis and centrifugal forces:--------")
+pprint(Cqdot)
+
+
+# ------------------------------------
+# e) Final dynamic model: tau = D(q) * qddot + C(q, qdot) * qdot + g(q)
+# ------------------------------------
+
+# Compute full torque vector tau
+tau = D * qddot + Cqdot + g_vec
+
+# Optionally substitute in numerical mass values and g from assignment
+mass_values = {m1: 0.3833, m2: 0.2724, m3: 0.1196, g : 9.81}
+tau = tau.subs(mass_values)
+tau_rounded = tau.evalf(4)
+
+print("--------Final dynamic model (tau):--------")
+pprint(tau_rounded)
