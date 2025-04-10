@@ -115,10 +115,18 @@ I3 = Matrix.diag(
     (1/12)*m3*(a3**2 + b3**2)
 )
 
-# Assume that the link frames are aligned with the base frame.
-# This means the inertia tensors are already expressed in the base frame, 
-# so R_i = I and we do not need to rotate them: R_i * I_i * R_i^T = I_i.
-R1 = R2 = R3 = Matrix.eye(3)
+# Rotation matrices from base frame to each link's center of mass
+R1 =  Matrix.eye(3)
+
+def Rz(theta): # Each link rotates about the z-axis
+    return Matrix([
+        [cos(theta), -sin(theta), 0],
+        [sin(theta),  cos(theta), 0],
+        [0,           0,          1]
+    ])
+
+R2 = Rz(q1) * Rz(q2)  # From base to mass center 2
+R3 = Rz(q1) * Rz(q2) * Rz(q3)  # From base to mass center 3
 
 # Pad D1 (1x1) to 3x3
 D1_block = m1 * (Jv1.T * Jv1) + (Jw1.T * R1 * I1 * R1.T * Jw1)
