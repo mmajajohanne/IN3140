@@ -10,7 +10,7 @@ t = dynamicsymbols._t
 qdot = Matrix([q1.diff(), q2.diff(), q3.diff()])
 qddot = Matrix([q1.diff(t, 2), q2.diff(t, 2), q3.diff(t, 2)])
 
-L1, L2, L3 = symbols('L1 L2 L3')  # link lengths
+L1, L2, L3 = symbols('L1 L2 L3') # link lengths
 g = symbols('g')                 # gravity
 m1, m2, m3 = symbols('m1 m2 m3') # masses
 
@@ -115,7 +115,9 @@ I3 = Matrix.diag(
     (1/12)*m3*(a3**2 + b3**2)
 )
 
-# Assume that R_i * I_i * R_i.T = I_i.
+# Assume that the link frames are aligned with the base frame.
+# This means the inertia tensors are already expressed in the base frame, 
+# so R_i = I and we do not need to rotate them: R_i * I_i * R_i^T = I_i.
 R1 = R2 = R3 = Matrix.eye(3)
 
 # Pad D1 (1x1) to 3x3
@@ -148,6 +150,7 @@ pprint(K_rounded)
 
 # ------------------------------------
 # d) Compute gravity vector g(q) and Coriolis term C(q, qdot)*qdot
+# ------------------------------------
 
 # Gravity vector from the gradient of potential energy 
 g1 = diff(P, q1)
@@ -191,5 +194,5 @@ mass_values = {m1: 0.3833, m2: 0.2724, m3: 0.1196, g : 9.81}
 tau = tau.subs(mass_values)
 tau_rounded = tau.evalf(4)
 
-print("--------Final dynamic model (tau):--------")
-pprint(tau_rounded)
+#print("--------Final dynamic model (tau):--------")
+#pprint(tau_rounded)
